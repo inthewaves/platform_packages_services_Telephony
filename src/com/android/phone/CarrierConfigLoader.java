@@ -1463,6 +1463,41 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
         return configSubset;
     }
 
+    @Override
+    @NonNull
+    public PersistableBundle getOverrideConfigForSubIdWithFeature(int subscriptionId,
+            @NonNull String callingPackage, @Nullable String callingFeatureId,
+            boolean persistent) {
+        Objects.requireNonNull(callingPackage, "Calling package must be non-null");
+        enforceCallerIsSystemOrRequestingPackage(callingPackage);
+        enforceTelephonyFeatureWithException(callingPackage,
+                "getOverrideConfigForSubIdWithFeature");
+        if (!"com.android.settings".equals(callingPackage)) {
+            throw new SecurityException("not from Settings app");
+        }
+        if (!TelephonyPermissions.checkCallingOrSelfReadPhoneState(mContext, subscriptionId,
+                callingPackage, callingFeatureId, "getOverrideConfig")) {
+            return new PersistableBundle();
+        }
+
+        final int phoneId = SubscriptionManager.getPhoneId(subscriptionId);
+        if (!SubscriptionManager.isValidPhoneId(phoneId)) {
+            logd("Ignore invalid phoneId: " + phoneId + " for subId: " + subscriptionId);
+            throw new IllegalArgumentException(
+                    "Invalid phoneId " + phoneId + " for subId " + subscriptionId);
+        }
+
+        final var overrides = persistent ? mPersistentOverrideConfigs : mOverrideConfigs;
+        final var bundle = overrides[phoneId];
+        if (bundle == null) {
+            return new PersistableBundle();
+        } else {
+            final var deepCopy = bundle.deepCopy();
+            deepCopy.remove(KEY_VERSION);
+            return deepCopy;
+        }
+    }
+
     @android.annotation.EnforcePermission(android.Manifest.permission.MODIFY_PHONE_STATE)
     @Override
     public void overrideConfig(int subscriptionId, @Nullable PersistableBundle overrides,
