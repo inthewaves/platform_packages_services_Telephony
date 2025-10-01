@@ -1473,8 +1473,7 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
     @Override
     @NonNull
     public PersistableBundle getOverrideConfigForSubIdWithFeature(int subscriptionId,
-            @NonNull String callingPackage, @Nullable String callingFeatureId,
-            boolean persistent) {
+            @NonNull String callingPackage, @Nullable String callingFeatureId) {
         Objects.requireNonNull(callingPackage, "Calling package must be non-null");
         enforceCallerIsSystemOrRequestingPackage(callingPackage);
         enforceTelephonyFeatureWithException(callingPackage,
