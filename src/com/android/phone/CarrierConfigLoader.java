@@ -1389,14 +1389,7 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
             if (config != null) {
                 retConfig.putAll(config);
             }
-            config = mPersistentOverrideConfigs[phoneId];
-            if (config != null) {
-                retConfig.putAll(config);
-            }
-            config = mOverrideConfigs[phoneId];
-            if (config != null) {
-                retConfig.putAll(config);
-            }
+            putAllOverrides(phoneId, retConfig);
             // Ignore the theoretical case of the default app not being present since that won't
             // work in CarrierConfigLoader today.
             final boolean allConfigsApplied =
@@ -1411,6 +1404,20 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
             }
         }
         return retConfig;
+    }
+
+    /**
+     * Extracted method from upstream logic.
+     */
+    private void putAllOverrides(int phoneId, PersistableBundle retConfig) {
+        PersistableBundle config = mPersistentOverrideConfigs[phoneId];
+        if (config != null) {
+            retConfig.putAll(config);
+        }
+        config = mOverrideConfigs[phoneId];
+        if (config != null) {
+            retConfig.putAll(config);
+        }
     }
 
     @Override
@@ -1487,15 +1494,10 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
                     "Invalid phoneId " + phoneId + " for subId " + subscriptionId);
         }
 
-        final var overrides = persistent ? mPersistentOverrideConfigs : mOverrideConfigs;
-        final var bundle = overrides[phoneId];
-        if (bundle == null) {
-            return new PersistableBundle();
-        } else {
-            final var deepCopy = bundle.deepCopy();
-            deepCopy.remove(KEY_VERSION);
-            return deepCopy;
-        }
+        final PersistableBundle retConfig = new PersistableBundle();
+        putAllOverrides(phoneId, retConfig);
+        retConfig.remove(KEY_VERSION);
+        return retConfig;
     }
 
     @android.annotation.EnforcePermission(android.Manifest.permission.MODIFY_PHONE_STATE)
